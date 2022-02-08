@@ -6,6 +6,12 @@ class Lexer {
 		this.code = null;
 		this.code_length = 0;
 
+		// Keywords table
+		this.keyword_table = {
+			var: "VAR",
+			let: "LET",
+			for: "FOR",
+		};
 		// Operator table, mapping operator -> token name
 		this.opt_table = {
 			"+": "PLUS",
@@ -72,6 +78,28 @@ class Lexer {
 		if (operator !== undefined) {
 			return { name: operator, value: c, pos: this.pos++ };
 		}
+
+		// if it is in Table of Keywords
+		const keyword = Object.entries(this.keyword_table).filter((a) => {
+			if (
+				a[0][0] == this.code.charAt(this.pos) &&
+				a[0].split("").filter((key, i) => key == this.code.charAt(this.pos + i))
+					.length > 0
+			) {
+				return a;
+			}
+		});
+		if (keyword?.length > 0) {
+			const tok = {
+				name: "KEYWORD",
+				value: keyword[0][0],
+				pos: this.pos,
+			};
+			this.pos = this.pos + keyword[0][0].length;
+
+			return tok;
+		}
+
 		// Not an operator - so it's the beginning of another token.
 		if (Lexer._isAlphabet(c)) {
 			return this._process_identifier();
@@ -84,6 +112,7 @@ class Lexer {
 		}
 		throw Error(`Token error at ${this.pos}`);
 	}
+
 	_process_number() {
 		let endpos = this.pos + 1;
 		while (
@@ -187,10 +216,7 @@ class Lexer {
 
 const newLex = new Lexer();
 const code = `
-    let i = 0;
-    for(let i < 10; i++){
-        console.log(i)
-    }
+	let a = 12;
 `;
 
 newLex.input(code);
